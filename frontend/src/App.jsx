@@ -34,11 +34,11 @@ function App() {
           }}
         />
         <Routes>
-          {/* Auth Routes */}
+          {/* Public Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected Dashboard Routes */}
+          {/* Protected Dashboard Routes — all require authentication */}
           <Route
             element={
               <ProtectedRoute>
@@ -50,6 +50,8 @@ function App() {
             <Route path="/customers" element={<Customers />} />
             <Route path="/customers/:id" element={<CustomerProfile />} />
             <Route path="/services" element={<Services />} />
+
+            {/* Admin-only routes */}
             <Route
               path="/service-types"
               element={
@@ -84,9 +86,9 @@ function App() {
             />
           </Route>
 
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* Default: redirect root and unknown routes to /login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

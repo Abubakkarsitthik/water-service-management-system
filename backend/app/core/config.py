@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+import os
 
 
 class Settings(BaseSettings):
@@ -8,7 +9,7 @@ class Settings(BaseSettings):
     DB_NAME: str = "serviceiq"
 
     # JWT
-    JWT_SECRET: str = "serviceiq-dev-secret"
+    JWT_SECRET: str = "serviceiq-dev-secret-key-2024-change-in-production"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRY_MINUTES: int = 1440  # 24 hours
 
@@ -18,7 +19,9 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        env_file_encoding = "utf-8"
         case_sensitive = True
+        extra = "ignore"
 
 
 settings = Settings()

@@ -67,10 +67,31 @@ export default function Dashboard() {
       setCharts(chartsData);
     } catch (err) {
       console.error('Dashboard load error:', err);
+      // Provide fallback data when backend is unavailable
+      setStats({
+        total_customers: 0,
+        active_customers: 0,
+        due_today: 0,
+        due_this_week: 0,
+        completed_services: 0,
+        total_technicians: 0,
+        pending_services: 0,
+        overdue_services: 0,
+      });
+      setCharts({
+        monthly_services: [],
+        service_type_distribution: [],
+        customer_growth: [],
+        status_distribution: [],
+        recent_customers: [],
+        recent_services: [],
+        upcoming_services: [],
+      });
     } finally {
       setLoading(false);
     }
   };
+
 
   const getStatusBadge = (status) => {
     const map = {
