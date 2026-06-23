@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.database.mongodb import get_database
-from app.core.security import get_current_user, get_current_admin
+from app.core.security import get_current_user
 from app.schemas.settings import SettingsUpdate
 from datetime import datetime, timezone
 
@@ -14,12 +14,11 @@ async def get_settings(
 ):
     settings = await db.settings.find_one({})
     if not settings:
-        # Create default settings
         default = {
             "company_name": "ServiceIQ",
-            "contact_number": "",
+            "phone_number": "",
+            "whatsapp_number": "",
             "email": "",
-            "address": "",
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         result = await db.settings.insert_one(default)
@@ -35,11 +34,9 @@ async def get_settings(
 async def update_settings(
     update_data: SettingsUpdate,
     db=Depends(get_database),
-    current_user: dict = Depends(get_current_admin),
+    current_user: dict = Depends(get_current_user),
 ):
-    update_dict = {
-        k: v for k, v in update_data.model_dump().items() if v is not None
-    }
+    update_dict = {k: v for k, v in update_data.model_dump().items() if v is not None}
     update_dict["updated_at"] = datetime.now(timezone.utc).isoformat()
 
     settings = await db.settings.find_one({})

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from app.database.mongodb import get_database
-from app.core.security import get_current_user, get_current_admin
+from app.core.security import get_current_user
 from app.schemas.service_type import (
     ServiceTypeCreate,
     ServiceTypeUpdate,
@@ -14,11 +14,14 @@ router = APIRouter(prefix="/service-types", tags=["Service Types"])
 
 
 def format_service_type(st: dict) -> dict:
+    interval_days = st.get("default_interval_days", 90)
+    interval_months = st.get("reminder_interval_months", round(interval_days / 30))
     return {
         "id": str(st["_id"]),
         "name": st.get("name", ""),
         "description": st.get("description"),
-        "default_interval_days": st.get("default_interval_days", 90),
+        "default_interval_days": interval_days,
+        "reminder_interval_months": interval_months,
         "status": st.get("status", "active"),
         "created_at": st.get("created_at"),
     }
@@ -28,7 +31,7 @@ def format_service_type(st: dict) -> dict:
 async def create_service_type(
     service_type: ServiceTypeCreate,
     db=Depends(get_database),
-    current_user: dict = Depends(get_current_admin),
+    current_user: dict = Depends(get_current_user),
 ):
     # Check for duplicate name
     existing = await db.service_types.find_one(
@@ -39,10 +42,13 @@ async def create_service_type(
             status_code=400, detail="Service type with this name already exists"
         )
 
+    # Derive reminder_interval_months from default_interval_days
+    reminder_months = service_type.reminder_interval_months or round(service_type.default_interval_days / 30)
     doc = {
         "name": service_type.name,
         "description": service_type.description,
         "default_interval_days": service_type.default_interval_days,
+        "reminder_interval_months": reminder_months,
         "status": service_type.status,
         "created_by": current_user["id"],
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -89,7 +95,7 @@ async def update_service_type(
     service_type_id: str,
     update_data: ServiceTypeUpdate,
     db=Depends(get_database),
-    current_user: dict = Depends(get_current_admin),
+    current_user: dict = Depends(get_current_user),
 ):
     if not ObjectId.is_valid(service_type_id):
         raise HTTPException(status_code=400, detail="Invalid service type ID")
@@ -97,6 +103,12 @@ async def update_service_type(
     update_dict = {
         k: v for k, v in update_data.model_dump().items() if v is not None
     }
+
+    # Keep reminder_interval_months and default_interval_days in sync
+    if "reminder_interval_months" in update_dict and "default_interval_days" not in update_dict:
+        update_dict["default_interval_days"] = update_dict["reminder_interval_months"] * 30
+    elif "default_interval_days" in update_dict and "reminder_interval_months" not in update_dict:
+        update_dict["reminder_interval_months"] = round(update_dict["default_interval_days"] / 30)
 
     if not update_dict:
         raise HTTPException(status_code=400, detail="No fields to update")
@@ -115,7 +127,7 @@ async def update_service_type(
 async def delete_service_type(
     service_type_id: str,
     db=Depends(get_database),
-    current_user: dict = Depends(get_current_admin),
+    current_user: dict = Depends(get_current_user),
 ):
     if not ObjectId.is_valid(service_type_id):
         raise HTTPException(status_code=400, detail="Invalid service type ID")

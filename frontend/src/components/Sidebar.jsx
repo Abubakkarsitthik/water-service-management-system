@@ -5,37 +5,31 @@ import {
   Users,
   Wrench,
   Settings,
-  ClipboardList,
-  UserCog,
   BarChart3,
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Zap,
+  MessageCircle,
+  Droplets,
 } from 'lucide-react';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/customers', label: 'Customers', icon: Users },
-  { path: '/services', label: 'Services', icon: ClipboardList },
-  { path: '/service-types', label: 'Service Types', icon: Wrench, adminOnly: true },
-  { path: '/technicians', label: 'Technicians', icon: UserCog, adminOnly: true },
-  { path: '/reports', label: 'Reports', icon: BarChart3, adminOnly: true },
-  { path: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
+  { path: '/service-types', label: 'Service Types', icon: Wrench },
+  { path: '/reminders', label: 'WhatsApp Reminders', icon: MessageCircle },
+  { path: '/reports', label: 'Reports', icon: BarChart3 },
+  { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function Sidebar({ collapsed, onToggle }) {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
-
-  const filteredItems = navItems.filter(
-    (item) => !item.adminOnly || isAdmin()
-  );
 
   return (
     <aside
@@ -46,7 +40,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-surface-100">
         <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
-          <Zap className="w-5 h-5 text-white" />
+          <Droplets className="w-5 h-5 text-white" />
         </div>
         {!collapsed && (
           <div className="animate-fade-in">
@@ -54,7 +48,7 @@ export default function Sidebar({ collapsed, onToggle }) {
               Service<span className="text-primary-600">IQ</span>
             </h1>
             <p className="text-[10px] text-surface-400 -mt-0.5 font-medium uppercase tracking-wider">
-              Management Platform
+              Service Management
             </p>
           </div>
         )}
@@ -62,7 +56,7 @@ export default function Sidebar({ collapsed, onToggle }) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {filteredItems.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
@@ -88,7 +82,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           <div className="flex items-center gap-3 px-3 py-2 mb-2 animate-fade-in">
             <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white text-xs font-bold">
-                {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                {user?.full_name?.charAt(0)?.toUpperCase() || 'A'}
               </span>
             </div>
             <div className="min-w-0">

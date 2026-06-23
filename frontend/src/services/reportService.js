@@ -1,39 +1,25 @@
 import api from './api';
 
 const reportService = {
-  getCustomerReport: async (params = {}) => {
-    const response = await api.get('/reports/customers', { params });
-    return response.data;
-  },
+  getCustomerReport: (params) => api.get('/reports/customers', { params }).then(r => r.data),
+  getDueServiceReport: (params) => api.get('/reports/due-services', { params }).then(r => r.data),
+  getReminderReport: (params) => api.get('/reports/reminders', { params }).then(r => r.data),
 
-  getServiceReport: async (params = {}) => {
-    const response = await api.get('/reports/services', { params });
-    return response.data;
-  },
-
-  getTechnicianReport: async (params = {}) => {
-    const response = await api.get('/reports/technicians', { params });
-    return response.data;
-  },
-
-  getDueServiceReport: async (params = {}) => {
-    const response = await api.get('/reports/due-services', { params });
-    return response.data;
-  },
-
-  downloadCSV: async (type, params = {}) => {
-    const response = await api.get(`/reports/${type}`, {
-      params: { ...params, format: 'csv' },
+  downloadExcel: (type) => {
+    return api.get(`/reports/${type}`, {
+      params: { format: 'excel' },
       responseType: 'blob',
+    }).then(r => {
+      const url = window.URL.createObjectURL(new Blob([r.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      link.setAttribute('download', `${type}_report_${date}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
     });
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${type}_report.csv`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
   },
 };
 

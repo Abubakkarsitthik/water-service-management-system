@@ -4,13 +4,10 @@ import { Toaster } from 'react-hot-toast';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
-import CustomerProfile from './pages/CustomerProfile';
 import ServiceTypes from './pages/ServiceTypes';
-import Services from './pages/Services';
-import Technicians from './pages/Technicians';
+import WhatsAppReminders from './pages/WhatsAppReminders';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 
@@ -34,11 +31,10 @@ function App() {
           }}
         />
         <Routes>
-          {/* Public Auth Routes */}
+          {/* Public */}
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
 
-          {/* Protected Dashboard Routes — all require authentication */}
+          {/* Protected Dashboard Routes */}
           <Route
             element={
               <ProtectedRoute>
@@ -48,45 +44,13 @@ function App() {
           >
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/customers" element={<Customers />} />
-            <Route path="/customers/:id" element={<CustomerProfile />} />
-            <Route path="/services" element={<Services />} />
-
-            {/* Admin-only routes */}
-            <Route
-              path="/service-types"
-              element={
-                <ProtectedRoute adminOnly>
-                  <ServiceTypes />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/technicians"
-              element={
-                <ProtectedRoute adminOnly>
-                  <Technicians />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute adminOnly>
-                  <Reports />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute adminOnly>
-                  <Settings />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/service-types" element={<ServiceTypes />} />
+            <Route path="/reminders" element={<WhatsAppReminders />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
 
-          {/* Default: redirect root and unknown routes to /login */}
+          {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 from app.core.config import settings
 from app.database.mongodb import connect_to_mongo, close_mongo_connection, is_db_available
-from app.routes import auth, customers, service_types, services, technicians, dashboard, reminders, reports, settings as settings_routes
+from app.routes import auth, customers, service_types, dashboard, reminders, reports, settings as settings_routes
 
 
 @asynccontextmanager
@@ -60,8 +60,6 @@ prefix = settings.API_V1_PREFIX
 app.include_router(auth.router, prefix=prefix)
 app.include_router(customers.router, prefix=prefix)
 app.include_router(service_types.router, prefix=prefix)
-app.include_router(services.router, prefix=prefix)
-app.include_router(technicians.router, prefix=prefix)
 app.include_router(dashboard.router, prefix=prefix)
 app.include_router(reminders.router, prefix=prefix)
 app.include_router(reports.router, prefix=prefix)

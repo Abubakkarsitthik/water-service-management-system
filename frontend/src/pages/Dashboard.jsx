@@ -2,55 +2,20 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import dashboardService from '../services/dashboardService';
-import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import {
   Users,
-  UserCheck,
   CalendarClock,
   CalendarDays,
-  CheckCircle2,
-  UserCog,
-  AlertTriangle,
-  Clock,
-  ArrowUpRight,
+  CalendarCheck2,
+  MessageCircle,
   ArrowRight,
+  TrendingUp,
 } from 'lucide-react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
-import { Bar, Doughnut, Line } from 'react-chartjs-2';
-
-ChartJS.register(
-  CategoryScale, LinearScale, BarElement, LineElement,
-  PointElement, ArcElement, Title, Tooltip, Legend, Filler
-);
-
-const statCards = [
-  { key: 'total_customers', label: 'Total Customers', icon: Users, color: 'from-blue-500 to-blue-600', bg: 'bg-blue-50', text: 'text-blue-600' },
-  { key: 'active_customers', label: 'Active Customers', icon: UserCheck, color: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-50', text: 'text-emerald-600' },
-  { key: 'due_today', label: 'Due Today', icon: CalendarClock, color: 'from-amber-500 to-amber-600', bg: 'bg-amber-50', text: 'text-amber-600' },
-  { key: 'due_this_week', label: 'Due This Week', icon: CalendarDays, color: 'from-violet-500 to-violet-600', bg: 'bg-violet-50', text: 'text-violet-600' },
-  { key: 'completed_services', label: 'Completed', icon: CheckCircle2, color: 'from-green-500 to-green-600', bg: 'bg-green-50', text: 'text-green-600' },
-  { key: 'total_technicians', label: 'Technicians', icon: UserCog, color: 'from-indigo-500 to-indigo-600', bg: 'bg-indigo-50', text: 'text-indigo-600' },
-  { key: 'pending_services', label: 'Pending', icon: Clock, color: 'from-orange-500 to-orange-600', bg: 'bg-orange-50', text: 'text-orange-600' },
-  { key: 'overdue_services', label: 'Overdue', icon: AlertTriangle, color: 'from-red-500 to-red-600', bg: 'bg-red-50', text: 'text-red-600' },
-];
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
-  const [charts, setCharts] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,332 +24,227 @@ export default function Dashboard() {
 
   const loadDashboard = async () => {
     try {
-      const [statsData, chartsData] = await Promise.all([
-        dashboardService.getStats(),
-        dashboardService.getCharts(),
-      ]);
-      setStats(statsData);
-      setCharts(chartsData);
+      const data = await dashboardService.getStats();
+      setStats(data);
     } catch (err) {
       console.error('Dashboard load error:', err);
-      // Provide fallback data when backend is unavailable
       setStats({
         total_customers: 0,
-        active_customers: 0,
         due_today: 0,
         due_this_week: 0,
-        completed_services: 0,
-        total_technicians: 0,
-        pending_services: 0,
-        overdue_services: 0,
-      });
-      setCharts({
-        monthly_services: [],
-        service_type_distribution: [],
-        customer_growth: [],
-        status_distribution: [],
+        due_this_month: 0,
+        reminders_sent: 0,
         recent_customers: [],
-        recent_services: [],
-        upcoming_services: [],
       });
     } finally {
       setLoading(false);
     }
   };
 
+  const statCards = [
+    {
+      key: 'total_customers',
+      label: 'Total Customers',
+      icon: Users,
+      gradient: 'from-blue-500 to-blue-600',
+      bg: 'bg-blue-50',
+      text: 'text-blue-600',
+      ring: 'ring-blue-100',
+      onClick: () => navigate('/customers'),
+    },
+    {
+      key: 'due_this_month',
+      label: 'Due This Month',
+      icon: CalendarDays,
+      gradient: 'from-violet-500 to-violet-600',
+      bg: 'bg-violet-50',
+      text: 'text-violet-600',
+      ring: 'ring-violet-100',
+      onClick: () => navigate('/reminders?filter=month'),
+    },
+    {
+      key: 'due_this_week',
+      label: 'Due This Week',
+      icon: CalendarCheck2,
+      gradient: 'from-amber-500 to-amber-600',
+      bg: 'bg-amber-50',
+      text: 'text-amber-600',
+      ring: 'ring-amber-100',
+      onClick: () => navigate('/reminders?filter=week'),
+    },
+    {
+      key: 'due_today',
+      label: 'Due Today',
+      icon: CalendarClock,
+      gradient: 'from-red-500 to-red-600',
+      bg: 'bg-red-50',
+      text: 'text-red-600',
+      ring: 'ring-red-100',
+      onClick: () => navigate('/reminders?filter=today'),
+    },
+    {
+      key: 'reminders_sent',
+      label: 'Reminders Sent',
+      icon: MessageCircle,
+      gradient: 'from-emerald-500 to-emerald-600',
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-600',
+      ring: 'ring-emerald-100',
+      onClick: () => navigate('/reminders'),
+    },
+  ];
 
-  const getStatusBadge = (status) => {
-    const map = {
-      pending: 'badge-warning',
-      assigned: 'badge-primary',
-      in_progress: 'badge-primary',
-      completed: 'badge-success',
-      cancelled: 'badge-danger',
-    };
-    return map[status] || 'badge-neutral';
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '—';
+    try {
+      return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const getReminderStatus = (dateStr) => {
+    if (!dateStr) return null;
+    const today = new Date().toISOString().slice(0, 10);
+    if (dateStr < today) return { label: 'Overdue', cls: 'badge-danger' };
+    if (dateStr === today) return { label: 'Today', cls: 'badge-warning' };
+    return { label: 'Upcoming', cls: 'badge-success' };
   };
 
   if (loading) {
     return (
       <div className="space-y-6 animate-in">
-        <div>
-          <h1 className="text-2xl font-bold text-surface-900">Dashboard</h1>
-          <p className="text-surface-500 text-sm mt-1">Loading your overview...</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="stat-card">
+              <div className="h-10 w-10 bg-surface-100 rounded-lg mb-4 animate-pulse" />
+              <div className="h-8 w-16 bg-surface-100 rounded mb-2 animate-pulse" />
+              <div className="h-4 w-24 bg-surface-100 rounded animate-pulse" />
+            </div>
+          ))}
         </div>
-        <LoadingSkeleton type="card" count={8} />
-        <LoadingSkeleton type="table" count={5} />
       </div>
     );
   }
 
-  // Chart data
-  const monthlyServicesData = {
-    labels: charts?.monthly_services?.map((m) => m._id || '') || [],
-    datasets: [
-      {
-        label: 'Services',
-        data: charts?.monthly_services?.map((m) => m.count) || [],
-        backgroundColor: 'rgba(99, 102, 241, 0.8)',
-        borderColor: 'rgba(99, 102, 241, 1)',
-        borderWidth: 1,
-        borderRadius: 6,
-        borderSkipped: false,
-      },
-    ],
-  };
-
-  const serviceTypeData = {
-    labels: charts?.service_type_distribution?.map((t) => t.name || 'Unknown') || [],
-    datasets: [
-      {
-        data: charts?.service_type_distribution?.map((t) => t.count) || [],
-        backgroundColor: [
-          '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
-          '#ec4899', '#f43f5e', '#f97316', '#eab308',
-          '#22c55e', '#14b8a6',
-        ],
-        borderWidth: 0,
-        hoverOffset: 4,
-      },
-    ],
-  };
-
-  const customerGrowthData = {
-    labels: charts?.customer_growth?.map((c) => c._id || '') || [],
-    datasets: [
-      {
-        label: 'New Customers',
-        data: charts?.customer_growth?.map((c) => c.count) || [],
-        borderColor: '#22c55e',
-        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-        tension: 0.4,
-        fill: true,
-        pointBackgroundColor: '#22c55e',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-      },
-    ],
-  };
-
-  const statusData = {
-    labels: charts?.status_distribution?.map((s) => s._id || '') || [],
-    datasets: [
-      {
-        data: charts?.status_distribution?.map((s) => s.count) || [],
-        backgroundColor: ['#f59e0b', '#6366f1', '#3b82f6', '#22c55e', '#ef4444'],
-        borderWidth: 0,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: '#1e293b',
-        titleColor: '#f1f5f9',
-        bodyColor: '#cbd5e1',
-        borderColor: '#334155',
-        borderWidth: 1,
-        cornerRadius: 8,
-        padding: 12,
-      },
-    },
-    scales: {
-      x: {
-        grid: { display: false },
-        ticks: { color: '#94a3b8', font: { size: 11 } },
-      },
-      y: {
-        grid: { color: '#f1f5f9' },
-        ticks: { color: '#94a3b8', font: { size: 11 } },
-      },
-    },
-  };
-
-  const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '65%',
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: { padding: 16, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } },
-      },
-    },
-  };
-
   return (
     <div className="space-y-6 animate-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-surface-900">
-          Welcome back, {user?.full_name?.split(' ')[0]} 👋
-        </h1>
-        <p className="text-surface-500 text-sm mt-1">
-          Here's what's happening with your services today.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-surface-900">
+            Welcome back, {user?.full_name?.split(' ')[0]} 👋
+          </h1>
+          <p className="text-surface-500 text-sm mt-1">
+            Here's your service overview for today.
+          </p>
+        </div>
+        <button
+          onClick={() => navigate('/reminders')}
+          className="btn-primary flex items-center gap-2 text-sm"
+        >
+          <MessageCircle className="w-4 h-4" />
+          Send Reminders
+        </button>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
         {statCards.map((card, idx) => {
           const Icon = card.icon;
           const value = stats?.[card.key] ?? 0;
           return (
-            <div
+            <button
               key={card.key}
-              className="stat-card group"
-              style={{ animationDelay: `${idx * 50}ms` }}
+              onClick={card.onClick}
+              className="stat-card text-left group cursor-pointer hover:ring-2 hover:ring-offset-1"
+              style={{ animationDelay: `${idx * 60}ms` }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className={`w-10 h-10 ${card.bg} rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}>
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-11 h-11 ${card.bg} rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}>
                   <Icon className={`w-5 h-5 ${card.text}`} />
                 </div>
-                <ArrowUpRight className="w-4 h-4 text-surface-300 group-hover:text-surface-500 transition-colors" />
+                <TrendingUp className="w-4 h-4 text-surface-200 group-hover:text-surface-400 transition-colors" />
               </div>
-              <p className="text-2xl font-bold text-surface-900">{value}</p>
-              <p className="text-sm text-surface-500 mt-0.5">{card.label}</p>
-            </div>
+              <p className="text-3xl font-bold text-surface-900 tabular-nums">{value}</p>
+              <p className="text-sm text-surface-500 mt-1">{card.label}</p>
+            </button>
           );
         })}
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Monthly Services */}
-        <div className="bg-white rounded-xl p-6 shadow-card border border-surface-100">
-          <h3 className="text-base font-semibold text-surface-900 mb-4">Monthly Service Trend</h3>
-          <div className="h-64">
-            <Bar data={monthlyServicesData} options={chartOptions} />
-          </div>
+      {/* Recent Customers */}
+      <div className="bg-white rounded-xl shadow-card border border-surface-100 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-surface-100">
+          <h3 className="text-sm font-semibold text-surface-900">Recently Added Customers</h3>
+          <button
+            onClick={() => navigate('/customers')}
+            className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 transition-colors"
+          >
+            View all <ArrowRight className="w-3 h-3" />
+          </button>
         </div>
-
-        {/* Service Type Distribution */}
-        <div className="bg-white rounded-xl p-6 shadow-card border border-surface-100">
-          <h3 className="text-base font-semibold text-surface-900 mb-4">Service Type Distribution</h3>
-          <div className="h-64">
-            <Doughnut data={serviceTypeData} options={doughnutOptions} />
-          </div>
-        </div>
-
-        {/* Customer Growth */}
-        <div className="bg-white rounded-xl p-6 shadow-card border border-surface-100">
-          <h3 className="text-base font-semibold text-surface-900 mb-4">Customer Growth</h3>
-          <div className="h-64">
-            <Line data={customerGrowthData} options={chartOptions} />
-          </div>
-        </div>
-
-        {/* Status Distribution */}
-        <div className="bg-white rounded-xl p-6 shadow-card border border-surface-100">
-          <h3 className="text-base font-semibold text-surface-900 mb-4">Completed vs Pending</h3>
-          <div className="h-64">
-            <Doughnut data={statusData} options={doughnutOptions} />
-          </div>
+        <div className="divide-y divide-surface-50">
+          {stats?.recent_customers?.length > 0 ? (
+            stats.recent_customers.map((c) => {
+              const status = getReminderStatus(c.next_reminder_date);
+              return (
+                <div key={c.id} className="px-5 py-3.5 hover:bg-surface-50/50 transition-colors flex items-center gap-4">
+                  <div className="w-9 h-9 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-xs font-bold">
+                      {c.name?.charAt(0)?.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-surface-800 truncate">{c.name}</p>
+                    <p className="text-xs text-surface-400">{c.phone} {c.service_type ? `· ${c.service_type}` : ''}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-xs text-surface-400">{formatDate(c.next_reminder_date)}</p>
+                    {status && (
+                      <span className={`${status.cls} mt-1`}>{status.label}</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Users className="w-10 h-10 text-surface-200 mb-3" />
+              <p className="text-sm text-surface-400">No customers yet.</p>
+              <button
+                onClick={() => navigate('/customers')}
+                className="mt-3 text-sm text-primary-600 hover:text-primary-700 font-medium"
+              >
+                Add your first customer →
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Recent Activity Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Customers */}
-        <div className="bg-white rounded-xl shadow-card border border-surface-100 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-surface-100">
-            <h3 className="text-sm font-semibold text-surface-900">Recent Customers</h3>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { label: 'Add Customer', desc: 'Register a new customer', path: '/customers', color: 'text-blue-600 bg-blue-50', icon: Users },
+          { label: 'WhatsApp Reminders', desc: 'View & send due reminders', path: '/reminders', color: 'text-green-600 bg-green-50', icon: MessageCircle },
+          { label: 'View Reports', desc: 'Generate business reports', path: '/reports', color: 'text-violet-600 bg-violet-50', icon: CalendarDays },
+        ].map((action) => {
+          const Icon = action.icon;
+          return (
             <button
-              onClick={() => navigate('/customers')}
-              className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+              key={action.path}
+              onClick={() => navigate(action.path)}
+              className="bg-white rounded-xl p-5 shadow-card border border-surface-100 hover:shadow-card-hover hover:border-surface-200 transition-all duration-200 text-left group"
             >
-              View all <ArrowRight className="w-3 h-3" />
+              <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <p className="text-sm font-semibold text-surface-800">{action.label}</p>
+              <p className="text-xs text-surface-400 mt-0.5">{action.desc}</p>
             </button>
-          </div>
-          <div className="divide-y divide-surface-50">
-            {charts?.recent_customers?.length > 0 ? (
-              charts.recent_customers.map((c) => (
-                <div key={c.id} className="px-5 py-3 hover:bg-surface-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-primary-600">
-                        {c.name?.charAt(0)?.toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-surface-800 truncate">{c.name}</p>
-                      <p className="text-xs text-surface-400">{c.mobile} · {c.city}</p>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="px-5 py-8 text-sm text-surface-400 text-center">No customers yet</p>
-            )}
-          </div>
-        </div>
-
-        {/* Recent Services */}
-        <div className="bg-white rounded-xl shadow-card border border-surface-100 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-surface-100">
-            <h3 className="text-sm font-semibold text-surface-900">Recent Services</h3>
-            <button
-              onClick={() => navigate('/services')}
-              className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
-            >
-              View all <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="divide-y divide-surface-50">
-            {charts?.recent_services?.length > 0 ? (
-              charts.recent_services.map((s) => (
-                <div key={s.id} className="px-5 py-3 hover:bg-surface-50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-surface-800 truncate">
-                        {s.customer_name || s.service_id}
-                      </p>
-                      <p className="text-xs text-surface-400">{s.service_date}</p>
-                    </div>
-                    <span className={getStatusBadge(s.status)}>
-                      {s.status}
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="px-5 py-8 text-sm text-surface-400 text-center">No services yet</p>
-            )}
-          </div>
-        </div>
-
-        {/* Upcoming Services */}
-        <div className="bg-white rounded-xl shadow-card border border-surface-100 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-surface-100">
-            <h3 className="text-sm font-semibold text-surface-900">Upcoming Services</h3>
-          </div>
-          <div className="divide-y divide-surface-50">
-            {charts?.upcoming_services?.length > 0 ? (
-              charts.upcoming_services.map((s) => (
-                <div key={s.id} className="px-5 py-3 hover:bg-surface-50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-surface-800 truncate">
-                        {s.customer_name || s.service_id}
-                      </p>
-                      <p className="text-xs text-surface-400">{s.service_date}</p>
-                    </div>
-                    <span className={getStatusBadge(s.status)}>
-                      {s.status}
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="px-5 py-8 text-sm text-surface-400 text-center">No upcoming services</p>
-            )}
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );

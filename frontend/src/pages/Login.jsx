@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Link, useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Zap, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Droplets, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Login() {
@@ -45,29 +45,28 @@ export default function Login() {
         <div className="relative z-10 flex flex-col justify-center px-16">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
-              <Zap className="w-7 h-7 text-white" />
+              <Droplets className="w-7 h-7 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">ServiceIQ</h1>
               <p className="text-primary-200 text-xs font-medium uppercase tracking-wider">
-                Management Platform
+                Service Management
               </p>
             </div>
           </div>
           <h2 className="text-4xl font-bold text-white leading-tight mb-4">
-            Manage your services
+            Recurring service
             <br />
-            <span className="text-primary-200">intelligently.</span>
+            <span className="text-primary-200">made simple.</span>
           </h2>
           <p className="text-primary-200 text-lg max-w-md leading-relaxed">
-            Streamline customer management, track services, and boost productivity
-            with AI-powered insights.
+            Track customers, send WhatsApp reminders, manage service types and export reports — all in one place.
           </p>
           <div className="mt-12 grid grid-cols-3 gap-6">
             {[
               { value: '10+', label: 'Service Types' },
-              { value: '500+', label: 'Businesses' },
-              { value: '99.9%', label: 'Uptime' },
+              { value: 'Free', label: 'WhatsApp API' },
+              { value: '100%', label: 'Data Yours' },
             ].map((stat) => (
               <div key={stat.label}>
                 <p className="text-2xl font-bold text-white">{stat.value}</p>
@@ -84,7 +83,7 @@ export default function Login() {
           <div className="text-center mb-8 lg:hidden">
             <div className="inline-flex items-center gap-2 mb-4">
               <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center">
-                <Zap className="w-6 h-6 text-white" />
+                <Droplets className="w-6 h-6 text-white" />
               </div>
               <h1 className="text-xl font-bold text-surface-900">
                 Service<span className="text-primary-600">IQ</span>
@@ -170,15 +169,14 @@ export default function Login() {
               </button>
             </form>
 
-            <p className="text-center text-sm text-surface-500 mt-6">
-              Don't have an account?{' '}
-              <Link
-                to="/register"
-                className="text-primary-600 hover:text-primary-700 font-medium"
-              >
-                Create account
-              </Link>
-            </p>
+            <div className="mt-6 p-3 bg-surface-50 rounded-lg border border-surface-200">
+              <p className="text-xs text-surface-500 text-center font-medium">Default credentials</p>
+              <p className="text-xs text-surface-600 text-center mt-1">
+                <code className="bg-white px-1.5 py-0.5 rounded border border-surface-200">admin@serviceiq.com</code>
+                &nbsp;/&nbsp;
+                <code className="bg-white px-1.5 py-0.5 rounded border border-surface-200">Admin@123</code>
+              </p>
+            </div>
           </div>
         </div>
       </div>
